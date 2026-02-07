@@ -1,0 +1,870 @@
+--[[
+    Break-a-Lucky-Block Auto Farm v4.0 FINAL + Key System
+    ✅ Ломает блоки
+    ✅ Собирает Brainrot
+    ✅ Возвращается на базу
+    🔐 Система верификации с ключами
+]]
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local TweenService = game:GetService("TweenService")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- ============================================
+-- СИСТЕМА КЛЮЧЕЙ
+-- ============================================
+
+local KeySystem = {
+    ValidKeys = {
+        "qwerty-poiu-0987"
+    },
+    DiscordLink = "https://discord.gg/yeWd226pRE",
+    Verified = false
+}
+
+-- Проверка ключа
+local function CheckKey(inputKey)
+    for _, validKey in pairs(KeySystem.ValidKeys) do
+        if inputKey == validKey then
+            return true
+        end
+    end
+    return false
+end
+
+-- GUI верификации
+local function CreateKeyGUI()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "KeySystemGUI"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    local existing = LocalPlayer.PlayerGui:FindFirstChild("KeySystemGUI")
+    if existing then existing:Destroy() end
+    
+    ScreenGui.Parent = LocalPlayer.PlayerGui
+    
+    -- Main Frame
+    local Main = Instance.new("Frame")
+    Main.Size = UDim2.new(0, 400, 0, 300)
+    Main.Position = UDim2.new(0.5, -200, 0.5, -150)
+    Main.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    Main.BorderSizePixel = 0
+    Main.Active = true
+    Main.Draggable = true
+    Main.ZIndex = 100
+    Main.Parent = ScreenGui
+    
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 12)
+    Corner.Parent = Main
+    
+    -- Title
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, -40, 0, 40)
+    Title.Position = UDim2.new(0, 20, 0, 15)
+    Title.BackgroundTransparency = 1
+    Title.Text = "🔐 Система Верификации"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextSize = 20
+    Title.Font = Enum.Font.GothamBold
+    Title.ZIndex = 101
+    Title.Parent = Main
+    
+    -- Subtitle
+    local Subtitle = Instance.new("TextLabel")
+    Subtitle.Size = UDim2.new(1, -40, 0, 30)
+    Subtitle.Position = UDim2.new(0, 20, 0, 55)
+    Subtitle.BackgroundTransparency = 1
+    Subtitle.Text = "Break Lucky Block Auto Farm v4.0"
+    Subtitle.TextColor3 = Color3.fromRGB(150, 150, 150)
+    Subtitle.TextSize = 14
+    Subtitle.Font = Enum.Font.Gotham
+    Subtitle.ZIndex = 101
+    Subtitle.Parent = Main
+    
+    -- Discord Info
+    local DiscordFrame = Instance.new("Frame")
+    DiscordFrame.Size = UDim2.new(1, -40, 0, 60)
+    DiscordFrame.Position = UDim2.new(0, 20, 0, 95)
+    DiscordFrame.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+    DiscordFrame.BorderSizePixel = 0
+    DiscordFrame.ZIndex = 101
+    DiscordFrame.Parent = Main
+    
+    local DiscordCorner = Instance.new("UICorner")
+    DiscordCorner.CornerRadius = UDim.new(0, 8)
+    DiscordCorner.Parent = DiscordFrame
+    
+    local DiscordText = Instance.new("TextLabel")
+    DiscordText.Size = UDim2.new(1, -20, 1, -20)
+    DiscordText.Position = UDim2.new(0, 10, 0, 10)
+    DiscordText.BackgroundTransparency = 1
+    DiscordText.Text = "📢 Зайдите на наш Discord сервер\nчтобы получить ключ!"
+    DiscordText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    DiscordText.TextSize = 13
+    DiscordText.Font = Enum.Font.GothamBold
+    DiscordText.TextWrapped = true
+    DiscordText.ZIndex = 102
+    DiscordText.Parent = DiscordFrame
+    
+    -- Copy Discord Button
+    local CopyDiscord = Instance.new("TextButton")
+    CopyDiscord.Size = UDim2.new(1, -40, 0, 35)
+    CopyDiscord.Position = UDim2.new(0, 20, 0, 165)
+    CopyDiscord.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+    CopyDiscord.Text = "📋 Скопировать Discord ссылку"
+    CopyDiscord.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CopyDiscord.TextSize = 12
+    CopyDiscord.Font = Enum.Font.GothamBold
+    CopyDiscord.BorderSizePixel = 0
+    CopyDiscord.ZIndex = 101
+    CopyDiscord.AutoButtonColor = false
+    CopyDiscord.Parent = Main
+    
+    local CopyCorner = Instance.new("UICorner")
+    CopyCorner.CornerRadius = UDim.new(0, 8)
+    CopyCorner.Parent = CopyDiscord
+    
+    CopyDiscord.MouseButton1Click:Connect(function()
+        setclipboard(KeySystem.DiscordLink)
+        CopyDiscord.Text = "✅ Ссылка скопирована!"
+        task.wait(2)
+        CopyDiscord.Text = "📋 Скопировать Discord ссылку"
+    end)
+    
+    -- Key Input
+    local KeyInput = Instance.new("TextBox")
+    KeyInput.Size = UDim2.new(1, -40, 0, 40)
+    KeyInput.Position = UDim2.new(0, 20, 0, 210)
+    KeyInput.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+    KeyInput.Text = ""
+    KeyInput.PlaceholderText = "Введите ключ..."
+    KeyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    KeyInput.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
+    KeyInput.TextSize = 14
+    KeyInput.Font = Enum.Font.Gotham
+    KeyInput.BorderSizePixel = 0
+    KeyInput.ZIndex = 101
+    KeyInput.ClearTextOnFocus = false
+    KeyInput.Parent = Main
+    
+    local InputCorner = Instance.new("UICorner")
+    InputCorner.CornerRadius = UDim.new(0, 8)
+    InputCorner.Parent = KeyInput
+    
+    local InputPadding = Instance.new("UIPadding")
+    InputPadding.PaddingLeft = UDim.new(0, 15)
+    InputPadding.Parent = KeyInput
+    
+    -- Verify Button
+    local VerifyBtn = Instance.new("TextButton")
+    VerifyBtn.Size = UDim2.new(1, -40, 0, 40)
+    VerifyBtn.Position = UDim2.new(0, 20, 0, 260)
+    VerifyBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
+    VerifyBtn.Text = "✅ Проверить ключ"
+    VerifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    VerifyBtn.TextSize = 14
+    VerifyBtn.Font = Enum.Font.GothamBold
+    VerifyBtn.BorderSizePixel = 0
+    VerifyBtn.ZIndex = 101
+    VerifyBtn.AutoButtonColor = false
+    VerifyBtn.Parent = Main
+    
+    local VerifyCorner = Instance.new("UICorner")
+    VerifyCorner.CornerRadius = UDim.new(0, 8)
+    VerifyCorner.Parent = VerifyBtn
+    
+    VerifyBtn.MouseButton1Click:Connect(function()
+        local inputKey = KeyInput.Text:gsub("^%s*(.-)%s*$", "%1") -- Убираем пробелы в начале и конце
+        
+        if inputKey == "" then
+            VerifyBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+            VerifyBtn.Text = "❌ Введите ключ!"
+            task.wait(2)
+            VerifyBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
+            VerifyBtn.Text = "✅ Проверить ключ"
+            return
+        end
+        
+        if CheckKey(inputKey) then
+            VerifyBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+            VerifyBtn.Text = "✅ Ключ верный! Загрузка..."
+            
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Верификация успешна!";
+                Text = "Загрузка скрипта...";
+                Duration = 3;
+            })
+            
+            task.wait(1)
+            KeySystem.Verified = true
+            ScreenGui:Destroy()
+            
+            -- Загружаем основной скрипт
+            LoadMainScript()
+        else
+            VerifyBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+            VerifyBtn.Text = "❌ Неверный ключ!"
+            task.wait(2)
+            VerifyBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
+            VerifyBtn.Text = "✅ Проверить ключ"
+        end
+    end)
+    
+    -- Animation
+    Main.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Back), {
+        Size = UDim2.new(0, 400, 0, 310)
+    }):Play()
+end
+
+-- ============================================
+-- ОСНОВНОЙ СКРИПТ (загружается после верификации)
+-- ============================================
+
+function LoadMainScript()
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Настройки
+local Settings = {
+    AutoFarm = false,
+    AutoClick = false,
+    AutoCollect = true,
+    AutoReturnBase = true,
+    ClickSpeed = 0.05,
+    MaxBrainrots = 1, -- В игре можно нести только 1 Brainrot за раз!
+    Running = true
+}
+
+local Connections = {}
+local NearBlock = false
+local BlocksCache = {}
+local LastBlockScan = 0
+local CollectedBrainrots = 0
+local PlayerBase = nil
+
+-- Отключение
+local function DisconnectAll()
+    for _, conn in pairs(Connections) do
+        pcall(function() conn:Disconnect() end)
+    end
+    Connections = {}
+    Settings.Running = false
+    print("[Script] Отключен")
+end
+
+-- Получить персонажа
+local function GetCharacter()
+    return LocalPlayer.Character
+end
+
+local function GetHRP()
+    local char = GetCharacter()
+    return char and char:FindFirstChild("HumanoidRootPart")
+end
+
+-- Клик мыши (только по блокам, НЕ по GUI!)
+local function ClickMouse()
+    local UserInputService = game:GetService("UserInputService")
+    
+    -- НЕ кликаем если есть фокус на текстовом поле
+    if UserInputService:GetFocusedTextBox() then return end
+    
+    -- НЕ кликаем если мышь над GUI
+    local mouse = LocalPlayer:GetMouse()
+    local mouseTarget = mouse.Target
+    
+    -- Проверяем что цель существует и это часть Workspace (не GUI)
+    if mouseTarget and mouseTarget:IsDescendantOf(Workspace) then
+        -- Дополнительная проверка - не кликаем если мышь над нашим GUI
+        local gui = LocalPlayer.PlayerGui:FindFirstChild("BreakLuckyBlockGUI")
+        if gui then
+            local mousePos = UserInputService:GetMouseLocation()
+            -- Простая проверка - если GUI видим, не кликаем
+            if gui.Enabled then
+                return
+            end
+        end
+        
+        -- Все проверки пройдены - кликаем
+        pcall(function()
+            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+            task.wait(0.01)
+            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+        end)
+    end
+end
+
+-- Найти блоки
+local function FindBlocks()
+    local currentTime = tick()
+    if currentTime - LastBlockScan < 5 and #BlocksCache > 0 then
+        return BlocksCache
+    end
+    
+    local blocks = {}
+    local luckyBlocksFolder = Workspace:FindFirstChild("LuckyBlocks")
+    
+    if luckyBlocksFolder then
+        for _, obj in pairs(luckyBlocksFolder:GetChildren()) do
+            if obj:IsA("BasePart") then
+                table.insert(blocks, obj)
+            elseif obj:IsA("Model") then
+                for _, part in pairs(obj:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        table.insert(blocks, part)
+                        break
+                    end
+                end
+            end
+            if #blocks >= 50 then break end
+        end
+    end
+    
+    BlocksCache = blocks
+    LastBlockScan = currentTime
+    return blocks
+end
+
+-- Ближайший блок
+local function GetNearestBlock()
+    local hrp = GetHRP()
+    if not hrp then return nil, math.huge end
+    
+    local blocks = FindBlocks()
+    if #blocks == 0 then return nil, math.huge end
+    
+    local nearest, minDist = nil, math.huge
+    for _, block in pairs(blocks) do
+        if block and block.Parent then
+            local dist = (hrp.Position - block.Position).Magnitude
+            if dist < minDist then
+                minDist = dist
+                nearest = block
+            end
+        end
+    end
+    return nearest, minDist
+end
+
+-- Найти базу
+local function FindPlayerBase()
+    if PlayerBase then 
+        print("[FindBase] Using cached base:", PlayerBase)
+        return PlayerBase 
+    end
+    
+    print("[FindBase] ========================================")
+    print("[FindBase] Searching for player base...")
+    print("[FindBase] Player name:", LocalPlayer.Name)
+    
+    -- Метод 1: Bases folder - ищем по имени игрока
+    local basesFolder = Workspace:FindFirstChild("Bases")
+    if basesFolder then
+        print("[FindBase] ✓ Found Bases folder")
+        for _, base in pairs(basesFolder:GetChildren()) do
+            print("[FindBase] Checking base:", base.Name, "Type:", base.ClassName)
+            if base.Name == LocalPlayer.Name or base.Name:find(LocalPlayer.Name) then
+                if base:IsA("Model") then
+                    local part = base:FindFirstChildOfClass("BasePart")
+                    if part then
+                        PlayerBase = part.Position
+                        print("[FindBase] ✓✓✓ FOUND in Bases! Position:", PlayerBase)
+                        print("[FindBase] ========================================")
+                        return PlayerBase
+                    end
+                elseif base:IsA("BasePart") then
+                    PlayerBase = base.Position
+                    print("[FindBase] ✓✓✓ FOUND in Bases! Position:", PlayerBase)
+                    print("[FindBase] ========================================")
+                    return PlayerBase
+                end
+            end
+        end
+        
+        -- Если не нашли по имени, берем первую базу (может быть одна база на всех)
+        print("[FindBase] No base with player name, trying first base...")
+        local firstBase = basesFolder:GetChildren()[1]
+        if firstBase then
+            print("[FindBase] Using first base:", firstBase.Name)
+            if firstBase:IsA("Model") then
+                local part = firstBase:FindFirstChildOfClass("BasePart")
+                if part then
+                    PlayerBase = part.Position
+                    print("[FindBase] ✓✓✓ FOUND first base! Position:", PlayerBase)
+                    print("[FindBase] ========================================")
+                    return PlayerBase
+                end
+            elseif firstBase:IsA("BasePart") then
+                PlayerBase = firstBase.Position
+                print("[FindBase] ✓✓✓ FOUND first base! Position:", PlayerBase)
+                print("[FindBase] ========================================")
+                return PlayerBase
+            end
+        end
+    else
+        print("[FindBase] ✗ Bases folder not found")
+    end
+    
+    -- Метод 2: Ищем SpawnLocation (точка спавна = база)
+    print("[FindBase] Trying method 2: searching for SpawnLocation...")
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("SpawnLocation") then
+            print("[FindBase] Found SpawnLocation!")
+            PlayerBase = obj.Position
+            print("[FindBase] ✓✓✓ FOUND spawn! Position:", PlayerBase)
+            print("[FindBase] ========================================")
+            return PlayerBase
+        end
+    end
+    
+    -- Метод 3: Используем текущую позицию игрока как базу
+    print("[FindBase] Trying method 3: using player current position...")
+    local hrp = GetHRP()
+    if hrp then
+        PlayerBase = hrp.Position
+        print("[FindBase] ✓✓✓ Using player position as base! Position:", PlayerBase)
+        print("[FindBase] ========================================")
+        return PlayerBase
+    end
+    
+    -- Метод 4: Ищем "Baseplate" и используем его центр
+    print("[FindBase] Trying method 4: searching for Baseplate...")
+    local baseplate = Workspace:FindFirstChild("Baseplate")
+    if baseplate and baseplate:IsA("BasePart") then
+        PlayerBase = baseplate.Position + Vector3.new(0, 10, 0)
+        print("[FindBase] ✓✓✓ Using Baseplate center! Position:", PlayerBase)
+        print("[FindBase] ========================================")
+        return PlayerBase
+    end
+    
+    print("[FindBase] ✗✗✗ BASE NOT FOUND!")
+    print("[FindBase] ========================================")
+    return nil
+end
+
+-- Найти Brainrot (только выпавшие из блоков, не на базе!)
+local function FindBrainrots()
+    local brainrots = {}
+    local hrp = GetHRP()
+    if not hrp then return brainrots end
+    
+    -- Метод 1: TemporaryBrainrots (выпавшие из блоков)
+    local tempFolder = Workspace:FindFirstChild("TemporaryBrainrots")
+    if tempFolder then
+        for _, obj in pairs(tempFolder:GetChildren()) do
+            if obj and obj.Parent then
+                table.insert(brainrots, obj)
+                print("[FindBrainrots] Найден Brainrot:", obj.Name)
+            end
+        end
+    end
+    
+    -- Метод 2: Ищем в Workspace напрямую (модели с ProximityPrompt)
+    for _, obj in pairs(Workspace:GetChildren()) do
+        if obj:IsA("Model") and obj.Name:lower():find("brain") then
+            local hasPrompt = obj:FindFirstChildOfClass("ProximityPrompt", true)
+            if hasPrompt then
+                local alreadyAdded = false
+                for _, existing in pairs(brainrots) do
+                    if existing == obj then
+                        alreadyAdded = true
+                        break
+                    end
+                end
+                if not alreadyAdded then
+                    table.insert(brainrots, obj)
+                    print("[FindBrainrots] Найден Brainrot в Workspace:", obj.Name)
+                end
+            end
+        end
+    end
+    
+    print("[FindBrainrots] Всего найдено Brainrot:", #brainrots)
+    return brainrots
+end
+
+-- Собрать Brainrot
+local function CollectBrainrot()
+    local hrp = GetHRP()
+    if not hrp then return false end
+    
+    local brainrots = FindBrainrots()
+    if #brainrots == 0 then return false end
+    
+    local nearest, minDist = nil, math.huge
+    
+    for _, br in pairs(brainrots) do
+        if br and br.Parent then
+            local pos = br:IsA("Model") and br:GetPivot().Position or br.Position
+            local dist = (hrp.Position - pos).Magnitude
+            if dist < minDist and dist < 100 then
+                minDist = dist
+                nearest = br
+            end
+        end
+    end
+    
+    if nearest then
+        local pos = nearest:IsA("Model") and nearest:GetPivot().Position or nearest.Position
+        local char = GetCharacter()
+        
+        if char then
+            print("[Collect] Телепортация к Brainrot...")
+            pcall(function() char:PivotTo(CFrame.new(pos + Vector3.new(0, 3, 0))) end)
+            pcall(function() hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0)) end)
+            task.wait(0.5)
+            
+            -- ProximityPrompt
+            local proximityPrompt = nearest:FindFirstChildOfClass("ProximityPrompt", true)
+            if proximityPrompt then
+                print("[Collect] Активация ProximityPrompt...")
+                fireproximityprompt(proximityPrompt)
+                task.wait(0.5)
+            end
+            
+            -- Зажимаем E для сбора
+            print("[Collect] Зажимаем E для сбора...")
+            pcall(function()
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                task.wait(2.5)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+            end)
+            
+            CollectedBrainrots = CollectedBrainrots + 1
+            print("[Collect] ✓✓✓ Brainrot собран! Счетчик:", CollectedBrainrots)
+            
+            -- МОМЕНТАЛЬНО телепортируемся на базу после сбора!
+            print("[Collect] ========================================")
+            print("[Collect] МОМЕНТАЛЬНАЯ ТЕЛЕПОРТАЦИЯ НА БАЗУ!")
+            print("[Collect] ========================================")
+            task.wait(0.3)
+            ReturnToBase()
+            
+            return true
+        end
+    end
+    
+    return false
+end
+
+-- Вернуться на базу
+local function ReturnToBase()
+    local base = FindPlayerBase()
+    
+    local char = GetCharacter()
+    local hrp = GetHRP()
+    if not char or not hrp then return false end
+    
+    if base then
+        print("[Base] Возврат на базу...")
+        pcall(function() char:PivotTo(CFrame.new(base + Vector3.new(0, 5, 0))) end)
+        pcall(function() hrp.CFrame = CFrame.new(base + Vector3.new(0, 5, 0)) end)
+        task.wait(1.5)
+    else
+        print("[Base] База не найдена - остаемся на месте и размещаем Brainrot")
+        -- Пытаемся разместить Brainrot на текущей позиции
+        task.wait(1)
+    end
+    
+    -- Пытаемся активировать размещение Brainrot (нажимаем E)
+    print("[Base] Размещаем Brainrot...")
+    pcall(function()
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+        task.wait(0.5)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+    end)
+    
+    CollectedBrainrots = 0
+    print("[Base] Brainrot размещен! Счетчик сброшен.")
+    return true
+end
+
+-- Auto Click Loop
+local function AutoClickLoop()
+    while Settings.Running do
+        if Settings.AutoClick and NearBlock then
+            pcall(ClickMouse)
+        end
+        task.wait(Settings.ClickSpeed)
+    end
+end
+
+-- Auto Farm Loop
+local function AutoFarmLoop()
+    while Settings.Running do
+        if Settings.AutoFarm then
+            pcall(function()
+                local char = GetCharacter()
+                local hrp = GetHRP()
+                if not char or not hrp then
+                    NearBlock = false
+                    return
+                end
+                
+                -- Сбор Brainrot (телепортация на базу происходит внутри CollectBrainrot)
+                if Settings.AutoCollect then
+                    local brainrots = FindBrainrots()
+                    if #brainrots > 0 then
+                        print("[Farm] ========================================")
+                        print("[Farm] Найдено", #brainrots, "Brainrot - собираем...")
+                        print("[Farm] ========================================")
+                        CollectBrainrot()
+                        task.wait(3) -- Ждем дольше после сбора и телепортации
+                        return
+                    end
+                end
+                
+                -- Ломаем блоки
+                local block, distance = GetNearestBlock()
+                if block then
+                    NearBlock = distance <= 20
+                    
+                    if distance > 15 then
+                        local targetPos = block.Position + Vector3.new(0, 15, 0)
+                        pcall(function() char:PivotTo(CFrame.new(targetPos)) end)
+                        pcall(function() hrp.CFrame = CFrame.new(targetPos) end)
+                        task.wait(0.3)
+                        NearBlock = true
+                    end
+                    
+                    if NearBlock then
+                        for i = 1, 5 do
+                            ClickMouse()
+                            task.wait(0.05)
+                        end
+                    end
+                else
+                    NearBlock = false
+                end
+            end)
+        else
+            NearBlock = false
+        end
+        task.wait(0.5)
+    end
+end
+
+
+-- ============================================
+-- GUI
+-- ============================================
+
+local function CreateGUI()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "BreakLuckyBlockGUI"
+    ScreenGui.ResetOnSpawn = false
+    
+    local existing = LocalPlayer.PlayerGui:FindFirstChild("BreakLuckyBlockGUI")
+    if existing then existing:Destroy() end
+    
+    ScreenGui.Parent = LocalPlayer.PlayerGui
+    
+    -- Main Frame
+    local Main = Instance.new("Frame")
+    Main.Size = UDim2.new(0, 300, 0, 230)
+    Main.Position = UDim2.new(0.5, -150, 0.5, -115)
+    Main.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    Main.BorderSizePixel = 0
+    Main.Active = true
+    Main.Draggable = true
+    Main.ZIndex = 5
+    Main.Parent = ScreenGui
+    
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 10)
+    Corner.Parent = Main
+    
+    -- Title
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, -20, 0, 30)
+    Title.Position = UDim2.new(0, 10, 0, 10)
+    Title.BackgroundTransparency = 1
+    Title.Text = "🎮 Break Lucky Block v4.0"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextSize = 16
+    Title.Font = Enum.Font.GothamBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.ZIndex = 6
+    Title.Parent = Main
+    
+    -- Divider
+    local Div = Instance.new("Frame")
+    Div.Size = UDim2.new(1, -20, 0, 1)
+    Div.Position = UDim2.new(0, 10, 0, 45)
+    Div.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    Div.BorderSizePixel = 0
+    Div.ZIndex = 6
+    Div.Parent = Main
+    
+    -- Toggle Function
+    local function CreateToggle(text, yPos, callback)
+        local Frame = Instance.new("Frame")
+        Frame.Size = UDim2.new(1, -30, 0, 35)
+        Frame.Position = UDim2.new(0, 15, 0, yPos)
+        Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+        Frame.BorderSizePixel = 0
+        Frame.ZIndex = 6
+        Frame.Parent = Main
+        
+        local FCorn = Instance.new("UICorner")
+        FCorn.CornerRadius = UDim.new(0, 6)
+        FCorn.Parent = Frame
+        
+        local Label = Instance.new("TextLabel")
+        Label.Size = UDim2.new(1, -55, 1, 0)
+        Label.Position = UDim2.new(0, 10, 0, 0)
+        Label.BackgroundTransparency = 1
+        Label.Text = text
+        Label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        Label.TextSize = 12
+        Label.Font = Enum.Font.Gotham
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.ZIndex = 7
+        Label.Parent = Frame
+        
+        local Btn = Instance.new("TextButton")
+        Btn.Size = UDim2.new(0, 40, 0, 20)
+        Btn.Position = UDim2.new(1, -45, 0.5, -10)
+        Btn.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
+        Btn.Text = "OFF"
+        Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Btn.TextSize = 10
+        Btn.Font = Enum.Font.GothamBold
+        Btn.BorderSizePixel = 0
+        Btn.ZIndex = 10
+        Btn.AutoButtonColor = false
+        Btn.Parent = Frame
+        
+        local BCorn = Instance.new("UICorner")
+        BCorn.CornerRadius = UDim.new(0, 5)
+        BCorn.Parent = Btn
+        
+        local enabled = false
+        
+        Btn.MouseButton1Click:Connect(function()
+            enabled = not enabled
+            local color = enabled and Color3.fromRGB(0, 180, 90) or Color3.fromRGB(80, 80, 100)
+            TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = color}):Play()
+            Btn.Text = enabled and "ON" or "OFF"
+            callback(enabled)
+            print("[Toggle]", text, enabled and "ON" or "OFF")
+        end)
+        
+        return Btn
+    end
+    
+    -- Toggles
+    CreateToggle("🔨 Auto Farm (Всё в одном)", 55, function(enabled)
+        Settings.AutoFarm = enabled
+        Settings.AutoClick = enabled
+        Settings.AutoCollect = enabled
+        Settings.AutoReturnBase = enabled
+        print("[Auto Farm]", enabled and "ON - Полный автофарм!" or "OFF")
+    end)
+    
+    -- Info Label
+    local Info = Instance.new("TextLabel")
+    Info.Size = UDim2.new(1, -30, 0, 80)
+    Info.Position = UDim2.new(0, 15, 0, 100)
+    Info.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+    Info.Text = "Полный автофарм:\n✅ Ломает блоки\n✅ Собирает 1 Brainrot\n✅ Возврат на базу"
+    Info.TextColor3 = Color3.fromRGB(150, 200, 150)
+    Info.TextSize = 11
+    Info.Font = Enum.Font.Gotham
+    Info.TextYAlignment = Enum.TextYAlignment.Top
+    Info.ZIndex = 6
+    Info.Parent = Main
+    
+    local InfoCorn = Instance.new("UICorner")
+    InfoCorn.CornerRadius = UDim.new(0, 6)
+    InfoCorn.Parent = Info
+    
+    local InfoPadding = Instance.new("UIPadding")
+    InfoPadding.PaddingTop = UDim.new(0, 10)
+    InfoPadding.PaddingLeft = UDim.new(0, 10)
+    InfoPadding.Parent = Info
+    
+    -- Close Button
+    local Close = Instance.new("TextButton")
+    Close.Size = UDim2.new(1, -30, 0, 30)
+    Close.Position = UDim2.new(0, 15, 0, 190)
+    Close.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+    Close.Text = "❌ Закрыть"
+    Close.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Close.TextSize = 12
+    Close.Font = Enum.Font.GothamBold
+    Close.BorderSizePixel = 0
+    Close.ZIndex = 10
+    Close.AutoButtonColor = false
+    Close.Parent = Main
+    
+    local CCorn = Instance.new("UICorner")
+    CCorn.CornerRadius = UDim.new(0, 6)
+    CCorn.Parent = Close
+    
+    Close.MouseButton1Click:Connect(function()
+        print("[GUI] Закрытие...")
+        Settings.AutoFarm = false
+        Settings.AutoClick = false
+        DisconnectAll()
+        task.wait(0.1)
+        ScreenGui:Destroy()
+    end)
+    
+    -- Animation
+    Main.Size = UDim2.new(0, 0, 0, 0)
+    TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Back), {
+        Size = UDim2.new(0, 300, 0, 230)
+    }):Play()
+end
+
+-- ============================================
+-- INIT
+-- ============================================
+
+table.insert(Connections, LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+end))
+
+task.spawn(AutoFarmLoop)
+task.spawn(AutoClickLoop)
+
+CreateGUI()
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Break Lucky Block v4.0";
+    Text = "✅ Готов к работе!";
+    Duration = 5;
+})
+
+print("===========================================")
+print("Break-a-Lucky-Block v4.0 FINAL")
+print("✅ Auto Farm - ломает блоки")
+print("✅ Auto Click - кликает")
+print("✅ Auto Collect - собирает Brainrot")
+print("✅ Auto Return Base - возврат на базу")
+print("===========================================")
+
+end -- Конец функции LoadMainScript
+
+-- ============================================
+-- ЗАПУСК
+-- ============================================
+
+-- Проверяем верификацию
+if not KeySystem.Verified then
+    print("🔐 Требуется верификация...")
+    CreateKeyGUI()
+else
+    LoadMainScript()
+end
